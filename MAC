@@ -1,44 +1,77 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 12.03.2025 12:06:22
-// Design Name: 
-// Module Name: MAC
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+`timescale 1ns/1ps
+
 
 
 module MAC(
-input [71:0] input_img,
-input [71:0] input_kernel,
-input rst,en,
-output reg [19:0] conv_out
-    );
+    input [143:0] input_img,
+    input [143:0] input_kernel,
+    input rst, en,
+    output reg [15:0] conv_out
+);
+    wire [15:0] conv_out_temp;
+    wire [31:0] prod_1, prod_2, prod_3, prod_4, prod_5, 
+                prod_6, prod_7, prod_8, prod_9;
+    wire [15:0] prod1, prod2, prod3, prod4, prod5, prod6, prod7, prod8, prod9;
     
-    always @* begin
-    conv_out = (rst || ~en) ? 20'b0 :  
-               (input_img[7:0]   * input_kernel[7:0])   +
-               (input_img[15:8]  * input_kernel[15:8])  +
-               (input_img[23:16] * input_kernel[23:16]) +
-               (input_img[31:24] * input_kernel[31:24]) +
-               (input_img[39:32] * input_kernel[39:32]) +
-               (input_img[47:40] * input_kernel[47:40]) +
-               (input_img[55:48] * input_kernel[55:48]) +
-               (input_img[63:56] * input_kernel[63:56]) +
-               (input_img[71:64] * input_kernel[71:64]);
-   end
-
+    wire [15:0] sum_12, sum_34, sum_56, sum_78, sum_1234, sum_5678, sum_12345678, sum_final;
+    wire [15:0] sum_12_adj, sum_34_adj, sum_56_adj, sum_78_adj, sum_1234_adj, sum_5678_adj, sum_12345678_adj;
+                
+    assign prod_1 = ($signed(input_img[15:0])   * $signed(input_kernel[15:0]));
+    assign prod_2 = ($signed(input_img[31:16])  * $signed(input_kernel[31:16]));
+    assign prod_3 = ($signed(input_img[47:32])  * $signed(input_kernel[47:32]));
+    assign prod_4 = ($signed(input_img[63:48])  * $signed(input_kernel[63:48]));
+    assign prod_5 = ($signed(input_img[79:64])  * $signed(input_kernel[79:64]));
+    assign prod_6 = ($signed(input_img[95:80])  * $signed(input_kernel[95:80]));
+    assign prod_7 = ($signed(input_img[111:96]) * $signed(input_kernel[111:96]));
+    assign prod_8 = ($signed(input_img[127:112]) * $signed(input_kernel[127:112]));
+    assign prod_9 = ($signed(input_img[143:128]) * $signed(input_kernel[143:128]));
+    
+    assign prod1 = prod_1[23:8];
+    assign prod2 = prod_2[23:8];
+    assign prod3 = prod_3[23:8];
+    assign prod4 = prod_4[23:8];
+    assign prod5 = prod_5[23:8];
+    assign prod6 = prod_6[23:8];
+    assign prod7 = prod_7[23:8];
+    assign prod8 = prod_8[23:8];
+    assign prod9 = prod_9[23:8];
+    
+    assign sum_12 = prod1 + prod2;
+    assign sum_34 = prod3 + prod4;
+    assign sum_56 = prod5 + prod6;
+    assign sum_78 = prod7 + prod8;
+    
+    assign sum_12_adj = (!prod1[15] & !prod2[15] & sum_12[15]) ? {1'b0, 15'h7FFF} : 
+                        (prod1[15] & prod2[15] & !sum_12[15]) ? {1'b1, 15'b0} : sum_12[15:0];  
+    
+    assign sum_34_adj = (!prod3[15] & !prod4[15] & sum_34[15]) ? {1'b0, 15'h7FFF} : 
+                        (prod3[15] & prod4[15] & !sum_34[15]) ? {1'b1, 15'b0} : sum_34[15:0];  
+    
+    assign sum_56_adj = (!prod5[15] & !prod6[15] & sum_56[15]) ? {1'b0, 15'h7FFF} : 
+                        (prod5[15] & prod6[15] & !sum_56[15]) ? {1'b1, 15'b0} : sum_56[15:0];  
+    
+    assign sum_78_adj = (!prod7[15] & !prod8[15] & sum_78[15]) ? {1'b0, 15'h7FFF} : 
+                        (prod7[15] & prod8[15] & !sum_78[15]) ? {1'b1, 15'b0} : sum_78[15:0]; 
+    
+    assign sum_1234 = sum_12_adj + sum_34_adj;
+    assign sum_5678 = sum_56_adj + sum_78_adj;
+    
+    assign sum_1234_adj = (!sum_12_adj[15] & !sum_34_adj[15] & sum_1234[15]) ? {1'b0, 15'h7FFF} : 
+                          (sum_12_adj[15] & sum_34_adj[15] & !sum_1234[15]) ? {1'b1, 15'b0} : sum_1234[15:0];
+    
+    assign sum_5678_adj = (!sum_56_adj[15] & !sum_78_adj[15] & sum_5678[15]) ? {1'b0, 15'h7FFF} : 
+                          (sum_56_adj[15] & sum_78_adj[15] & !sum_5678[15]) ? {1'b1, 15'b0} : sum_5678[15:0];
+    
+    assign sum_12345678 = sum_1234_adj + sum_5678_adj;
+    
+    assign sum_12345678_adj = (!sum_1234_adj[15] & !sum_5678_adj[15] & sum_12345678[15]) ? {1'b0, 15'h7FFF} : 
+                              (sum_1234_adj[15] & sum_5678_adj[15] & !sum_12345678[15]) ? {1'b1, 15'b0} : sum_12345678[15:0];
+    
+    assign sum_final = sum_12345678_adj + prod9;
+    
+    assign conv_out_temp = (!sum_12345678_adj[15] & !prod9[15] & sum_final[15]) ? {1'b0, 15'h7FFF} : 
+                      (sum_12345678_adj[15] & prod9[15] & !sum_final[15]) ? {1'b1, 15'b0} : sum_final[15:0];
+    
+    always@* assign conv_out = (rst & !en) ? 0 : conv_out_temp[15] ? 0 : conv_out_temp;
     
 endmodule
