@@ -23,18 +23,18 @@
 module Max_Pool(
 input rst,
 input en,
-input[79:0] pixel_in,
-output reg [19:0] max_out
+input[63:0] pixel_in,
+output reg [15:0] max_out
     );
     
-    wire [19:0] a,b,c,d;
-    assign a = pixel_in[19:0];
-    assign b = pixel_in[39:20];
-    assign c = pixel_in[59:40];
-    assign d = pixel_in[79:60];
+    wire [15:0] a,b,c,d;
+    assign a = pixel_in[15:0];
+    assign b = pixel_in[31:16];
+    assign c = pixel_in[47:32];
+    assign d = pixel_in[63:48];
     
     always @* begin
-    max_out = (rst || ~en) ? 20'b0 : 
+    max_out = (rst || ~en) ? 16'b0 : 
                              (a > b) ? ((a > c) ? ((a > d) ? a : d) : ((c > d) ? c : d)) 
                               : ((b > c) ? ((b > d) ? b : d) : ((c > d) ? c : d));
                
